@@ -78,7 +78,5 @@ void BreakDialog::on_start_button_clicked()
         } else {
             QMessageBox::critical(this, tr("Fokus"), tr("There are no more breaks to redeem!"));
         }
-    } else {
-        QMessageBox::critical(this, tr("Fokus"), tr("There is already a session in progress!"));
     }
 }

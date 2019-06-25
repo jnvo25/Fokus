@@ -4,42 +4,56 @@
 #include "breakdialog.h"
 #include <iostream>
 #include <QTimer>
+#include <QTime>
 #include <string>
 #include <QMessageBox>
+#include <QElapsedTimer>
 
-static Timer sessionTimer;
 static QTimer *timer;
 static int breaks, lastMilestone;
+
+static QElapsedTimer stopwatch;
+static qint64 lastStop;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    std::cout << "Initializing" << std::endl;
-    sessionTimer = Timer();
+
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
     timer->start();
 
     breaks = 0;
     lastMilestone = 0;
+
+    stopwatch = QElapsedTimer();
 }
 
 void MainWindow::showTime()
 {
-    if (sessionTimer.hasStarted) {
-        ui->time_label->setText(QString::number(sessionTimer.getRunningTime()));
-    } else {
-        ui->time_label->setText(QString::number(sessionTimer.getTotalTime()));
+    // Update label with elapsed time
+    QTime timeElapsed(0,0,0,0);
+    if(stopwatch.isValid()) {
+        timeElapsed = timeElapsed.addMSecs(static_cast<int>(stopwatch.elapsed()+lastStop));
+    } else if (lastStop) {
+        timeElapsed = timeElapsed.addMSecs(static_cast<int>(lastStop));
     }
-    if(sessionTimer.getRunningTime() % 5 == 0) {
-        if(lastMilestone != sessionTimer.getRunningTime() && sessionTimer.getRunningTime() != -1) {
-            std::cout << sessionTimer.getRunningTime() << std::endl;
-            breaks += 1;
-            lastMilestone = sessionTimer.getRunningTime();
+    ui->time_label->setText(timeElapsed.toString(Qt::TextDate));
+
+    // Check if break is awarded
+    if(stopwatch.isValid()) {
+        int totalTime = static_cast<int>(stopwatch.elapsed() + lastStop);
+        if(totalTime % 5000 == 0) {
+            if(lastMilestone != totalTime) {
+                std::cout << "Break added" << std::endl;
+                breaks++;
+                lastMilestone = totalTime;
+            }
         }
     }
+
     ui->breaks_label->setText("Redeemable: " + QString::number(breaks) + " breaks");
 }
 
@@ -51,25 +65,40 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_stop_button_clicked()
 {
-    std::cout << "Stopping timer" << std::endl;
-    std::cout << sessionTimer.getRunningTime() << std::endl;
-    sessionTimer.stop();
+    if(stopwatch.isValid()) {
+        std::cout << "Stopping timer" << std::endl;
+        if(!lastStop) {
+            lastStop = stopwatch.elapsed();
+        } else {
+            lastStop += stopwatch.elapsed();
+        }
+        stopwatch.invalidate();
+    }
 }
 
 void MainWindow::on_start_button_clicked()
 {
-    std::cout << "Starting timer" << std::endl;
-    sessionTimer.start();
+    if(!stopwatch.isValid()) {
+        std::cout << "Starting timer" << std::endl;
+        stopwatch.restart();
+    }
 }
 
 void MainWindow::on_break_button_clicked()
 {
+
     if(breaks > 0) {
-    sessionTimer.stop();
-    int * breakPtr = &breaks;
-    BreakDialog breakWindow(nullptr, breakPtr);
-    breakWindow.setModal(true);
-    breakWindow.exec();
+        if(!lastStop) {
+            lastStop = stopwatch.elapsed();
+        } else {
+            lastStop += stopwatch.elapsed();
+        }
+        stopwatch.invalidate();
+
+        int * breakPtr = &breaks;
+        BreakDialog breakWindow(nullptr, breakPtr);
+        breakWindow.setModal(true);
+        breakWindow.exec();
     } else {
         QMessageBox::critical(this, tr("Fokus"), tr("There are no breaks to redeem!"));
     }

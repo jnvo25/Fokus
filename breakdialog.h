@@ -16,12 +16,13 @@ public:
     ~BreakDialog();
 
 private slots:
-    void showTime();
+    void updateView();
 
     void on_end_button_clicked();
 
     void on_start_button_clicked();
 
+    void showDialog();
 private:
     Ui::BreakDialog *ui;
 };

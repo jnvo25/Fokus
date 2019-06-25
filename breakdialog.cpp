@@ -1,5 +1,7 @@
 #include <iostream>
+#include <Qt>
 #include <QTimer>
+#include <QTime>
 #include <QMessageBox>
 
 #include "timer.h"
@@ -7,44 +9,58 @@
 #include "ui_breakdialog.h"
 
 static int* totalBreaks;
-static int lastMilestone;
-static Timer sessionTimer;
-static QTimer* timer;
+
+// Signals timeout every second
+static QTimer* updateTimer;
+
+// Timer for breaktime
+static QTimer* countdownTimer;
 
 BreakDialog::BreakDialog(QWidget *parent, int * breaks) :
     QDialog(parent),
     ui(new Ui::BreakDialog)
 {
     ui->setupUi(this);
+
+    // Get breaks from main timer window
     totalBreaks = breaks;
-    ui->breaksLeft_label->setText(QString::number(*totalBreaks));
 
-    sessionTimer = Timer();
+    // Create timer to update view every second
+    updateTimer = new QTimer(this);
+    connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
+    updateTimer->start();
 
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
-    timer->start();
+    // Create countdown timer for break time
+    countdownTimer = new QTimer(this);
+    countdownTimer->setSingleShot(true);
+    countdownTimer->setTimerType(Qt::PreciseTimer);
+    countdownTimer->setInterval(2000);
 
-    lastMilestone = 0;
+    // When break is over, show message popup
+    connect(countdownTimer, SIGNAL(timeout()), this, SLOT(showDialog()));
 }
 
-void BreakDialog::showTime()
+void BreakDialog::showDialog()
 {
-    if (sessionTimer.hasStarted) {
-        ui->time_label->setText(QString::number(25- sessionTimer.getRunningTime()));
-    } else {
-        ui->time_label->setText("25");
-    }
+    QMessageBox::warning(this, tr("Fokus"), tr("Break is over!"));
+}
 
-    if(sessionTimer.getRunningTime() != 0 && sessionTimer.getRunningTime() % 10 == 0) {
-        std::cout << "Stopping" << std::endl;
-        sessionTimer.stop();
-        QMessageBox::critical(this, tr("Fokus"), tr("Break is over!"));
+void BreakDialog::updateView()
+{
+    ui->breaksLeft_label->setText(QString::number(*totalBreaks));
+
+    if(countdownTimer->isActive()) {
+        QTime timeLeft(0,0,0,0);
+        timeLeft = timeLeft.addMSecs(countdownTimer->remainingTime());
+        std::cout << "OUTPUT: " << timeLeft.toString(Qt::TextDate).toStdString() << std::endl;
+        ui->time_label->setText(timeLeft.toString(Qt::TextDate));
     }
 }
 
 BreakDialog::~BreakDialog()
 {
+    delete countdownTimer;
+    delete updateTimer;
     delete ui;
 }
 
@@ -55,12 +71,10 @@ void BreakDialog::on_end_button_clicked()
 
 void BreakDialog::on_start_button_clicked()
 {
-    if(!sessionTimer.hasStarted) {
+    if(!countdownTimer->isActive()) {
         if(*totalBreaks > 0) {
-            std::cout << "Starting" << std::endl;
+            countdownTimer->start();
             *totalBreaks -= 1;
-            ui->breaksLeft_label->setText(QString::number(*totalBreaks));
-            sessionTimer.start();
         } else {
             QMessageBox::critical(this, tr("Fokus"), tr("There are no more breaks to redeem!"));
         }

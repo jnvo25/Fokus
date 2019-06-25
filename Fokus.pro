@@ -27,13 +27,11 @@ CONFIG += c++11
 SOURCES += \
         breakdialog.cpp \
         main.cpp \
-        mainwindow.cpp \
-        timer.cpp
+        mainwindow.cpp
 
 HEADERS += \
         breakdialog.h \
-        mainwindow.h \
-        timer.h
+        mainwindow.h
 
 FORMS += \
         breakdialog.ui \

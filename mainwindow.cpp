@@ -25,10 +25,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
     timer->start();
 
-    breaks = 0;
+    breaks = 10;
     lastMilestone = 0;
 
     stopwatch = QElapsedTimer();
+
+    ui->stop_button->hide();
 }
 
 void MainWindow::showTime()
@@ -73,6 +75,9 @@ void MainWindow::on_stop_button_clicked()
             lastStop += stopwatch.elapsed();
         }
         stopwatch.invalidate();
+        ui->start_button->setText("Resume");
+        ui->start_button->show();
+        ui->stop_button->hide();
     }
 }
 
@@ -81,13 +86,14 @@ void MainWindow::on_start_button_clicked()
     if(!stopwatch.isValid()) {
         std::cout << "Starting timer" << std::endl;
         stopwatch.restart();
+        ui->start_button->hide();
+        ui->stop_button->show();
     }
 }
 
 void MainWindow::on_break_button_clicked()
 {
-
-    if(breaks > 0) {
+    if(breaks > 0 && stopwatch.isValid()) {
         if(!lastStop) {
             lastStop = stopwatch.elapsed();
         } else {
@@ -95,6 +101,11 @@ void MainWindow::on_break_button_clicked()
         }
         stopwatch.invalidate();
 
+        int * breakPtr = &breaks;
+        BreakDialog breakWindow(nullptr, breakPtr);
+        breakWindow.setModal(true);
+        breakWindow.exec();
+    } else if(breaks > 0) {
         int * breakPtr = &breaks;
         BreakDialog breakWindow(nullptr, breakPtr);
         breakWindow.setModal(true);

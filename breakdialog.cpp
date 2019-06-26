@@ -8,6 +8,8 @@
 #include "breakdialog.h"
 #include "ui_breakdialog.h"
 
+const int BREAKTIME = 2000;
+
 static int* totalBreaks;
 
 // Signals timeout every second
@@ -34,13 +36,12 @@ BreakDialog::BreakDialog(QWidget *parent, int * breaks) :
     countdownTimer = new QTimer(this);
     countdownTimer->setSingleShot(true);
     countdownTimer->setTimerType(Qt::PreciseTimer);
-    countdownTimer->setInterval(2000);
+    countdownTimer->setInterval(BREAKTIME);
 
     // When break is over, show message popup
     connect(countdownTimer, SIGNAL(timeout()), this, SLOT(showDialog()));
 }
 
-// TODO:: ASK IF WANT TO USE ANOTHER BREAK
 void BreakDialog::showDialog()
 {
     if(*totalBreaks > 0) {
@@ -82,6 +83,11 @@ BreakDialog::~BreakDialog()
 
 void BreakDialog::on_end_button_clicked()
 {
+    // If used more breaks than used, put back breaks
+    if(countdownTimer->remainingTime() > BREAKTIME) {
+        *totalBreaks += countdownTimer->remainingTime()/BREAKTIME;
+    }
+
     close();
 }
 
@@ -91,8 +97,15 @@ void BreakDialog::on_start_button_clicked()
         if(*totalBreaks > 0) {
             countdownTimer->start();
             *totalBreaks -= 1;
+            ui->start_button->setText("Add");
         } else {
             QMessageBox::critical(this, tr("Fokus"), tr("There are no more breaks to redeem!"));
+        }
+    } else {
+        if(*totalBreaks > 0) {
+            countdownTimer->setInterval(countdownTimer->remainingTime() + BREAKTIME);
+            countdownTimer->start();
+            *totalBreaks -= 1;
         }
     }
 }

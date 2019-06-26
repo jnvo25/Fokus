@@ -113,4 +113,6 @@ void MainWindow::on_break_button_clicked()
     } else {
         QMessageBox::critical(this, tr("Fokus"), tr("There are no breaks to redeem!"));
     }
+    ui->start_button->show();
+    ui->stop_button->hide();
 }

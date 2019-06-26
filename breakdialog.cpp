@@ -4,11 +4,10 @@
 #include <QTime>
 #include <QMessageBox>
 
-#include "timer.h"
 #include "breakdialog.h"
 #include "ui_breakdialog.h"
 
-const int BREAKTIME = 2000;
+static int BREAKTIME;
 
 static int* totalBreaks;
 
@@ -18,7 +17,7 @@ static QTimer* updateTimer;
 // Timer for breaktime
 static QTimer* countdownTimer;
 
-BreakDialog::BreakDialog(QWidget *parent, int * breaks) :
+BreakDialog::BreakDialog(QWidget *parent, int * breaks, int passedBreak) :
     QDialog(parent),
     ui(new Ui::BreakDialog)
 {
@@ -26,6 +25,7 @@ BreakDialog::BreakDialog(QWidget *parent, int * breaks) :
 
     // Get breaks from main timer window
     totalBreaks = breaks;
+    BREAKTIME = passedBreak;
 
     // Create timer to update view every second
     updateTimer = new QTimer(this);

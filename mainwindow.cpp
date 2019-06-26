@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "timer.h"
 #include "breakdialog.h"
 #include <iostream>
 #include <QTimer>
@@ -8,6 +7,9 @@
 #include <string>
 #include <QMessageBox>
 #include <QElapsedTimer>
+
+const int BREAKTIME = 300000; // 5 minutes
+const int STUDYTIME = 1500000; // 25 minutes
 
 static QTimer *timer;
 static int breaks, lastMilestone;
@@ -25,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
     timer->start();
 
-    breaks = 10;
+    breaks = 0;
     lastMilestone = 0;
 
     stopwatch = QElapsedTimer();
@@ -47,9 +49,8 @@ void MainWindow::showTime()
     // Check if break is awarded
     if(stopwatch.isValid()) {
         int totalTime = static_cast<int>(stopwatch.elapsed() + lastStop);
-        if(totalTime % 5000 == 0) {
+        if(totalTime % STUDYTIME == 0) {
             if(lastMilestone != totalTime) {
-                std::cout << "Break added" << std::endl;
                 breaks++;
                 lastMilestone = totalTime;
             }
@@ -68,7 +69,6 @@ MainWindow::~MainWindow()
 void MainWindow::on_stop_button_clicked()
 {
     if(stopwatch.isValid()) {
-        std::cout << "Stopping timer" << std::endl;
         if(!lastStop) {
             lastStop = stopwatch.elapsed();
         } else {
@@ -84,7 +84,6 @@ void MainWindow::on_stop_button_clicked()
 void MainWindow::on_start_button_clicked()
 {
     if(!stopwatch.isValid()) {
-        std::cout << "Starting timer" << std::endl;
         stopwatch.restart();
         ui->start_button->hide();
         ui->stop_button->show();
@@ -93,26 +92,26 @@ void MainWindow::on_start_button_clicked()
 
 void MainWindow::on_break_button_clicked()
 {
-    if(breaks > 0 && stopwatch.isValid()) {
-        if(!lastStop) {
-            lastStop = stopwatch.elapsed();
-        } else {
-            lastStop += stopwatch.elapsed();
+    if(breaks > 0) {
+        // If stopwatch is in session, stop it
+        if(stopwatch.isValid()) {
+            if(!lastStop) {
+                lastStop = stopwatch.elapsed();
+            } else {
+                lastStop += stopwatch.elapsed();
+            }
+            stopwatch.invalidate();
         }
-        stopwatch.invalidate();
 
+        // Create new window
         int * breakPtr = &breaks;
-        BreakDialog breakWindow(nullptr, breakPtr);
+        BreakDialog breakWindow(nullptr, breakPtr, BREAKTIME);
         breakWindow.setModal(true);
         breakWindow.exec();
-    } else if(breaks > 0) {
-        int * breakPtr = &breaks;
-        BreakDialog breakWindow(nullptr, breakPtr);
-        breakWindow.setModal(true);
-        breakWindow.exec();
+
+        ui->start_button->show();
+        ui->stop_button->hide();
     } else {
         QMessageBox::critical(this, tr("Fokus"), tr("There are no breaks to redeem!"));
     }
-    ui->start_button->show();
-    ui->stop_button->hide();
 }

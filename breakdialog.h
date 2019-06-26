@@ -12,7 +12,7 @@ class BreakDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit BreakDialog(QWidget *parent = nullptr, int * = nullptr);
+    explicit BreakDialog(QWidget *parent = nullptr, int * = nullptr, int = 0);
     ~BreakDialog();
 
 private slots:

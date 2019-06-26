@@ -40,19 +40,35 @@ BreakDialog::BreakDialog(QWidget *parent, int * breaks) :
     connect(countdownTimer, SIGNAL(timeout()), this, SLOT(showDialog()));
 }
 
+// TODO:: ASK IF WANT TO USE ANOTHER BREAK
 void BreakDialog::showDialog()
 {
-    QMessageBox::warning(this, tr("Fokus"), tr("Break is over!"));
+    if(*totalBreaks > 0) {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Fokus", "Do you want to use another break?", QMessageBox::Yes | QMessageBox::No);
+        switch (reply) {
+            case QMessageBox::Yes:
+                countdownTimer->start();
+                *totalBreaks -= 1;
+                break;
+            case QMessageBox::No:
+                close();
+                break;
+            default: break;
+        }
+    } else {
+        QMessageBox::warning(this, tr("Fokus"), tr("Break is over! No more breaks to redeem!"));
+        close();
+    }
 }
 
 void BreakDialog::updateView()
 {
-    ui->breaksLeft_label->setText(QString::number(*totalBreaks));
+    ui->breaksLeft_label->setText("Breaks left: " + QString::number(*totalBreaks));
 
     if(countdownTimer->isActive()) {
         QTime timeLeft(0,0,0,0);
         timeLeft = timeLeft.addMSecs(countdownTimer->remainingTime());
-        std::cout << "OUTPUT: " << timeLeft.toString(Qt::TextDate).toStdString() << std::endl;
         ui->time_label->setText(timeLeft.toString(Qt::TextDate));
     }
 }

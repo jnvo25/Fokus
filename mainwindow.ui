@@ -26,8 +26,16 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QLabel" name="time_label">
+       <property name="font">
+        <font>
+         <pointsize>62</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>00:00:00</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -35,6 +43,12 @@
       <widget class="QLabel" name="breaks_label">
        <property name="text">
         <string>Redeemable: 0 Breaks</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="margin">
+        <number>15</number>
        </property>
       </widget>
      </item>
@@ -51,6 +65,15 @@
         <widget class="QPushButton" name="stop_button">
          <property name="text">
           <string>Stop</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+         <property name="default">
+          <bool>false</bool>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
